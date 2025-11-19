@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChatGPT Data Breach Explorer</title>
+    <style>
+        :root {
+            --color-cream-50: rgba(252, 252, 249, 1);
+            --color-cream-100: rgba(255, 255, 253, 1);
+            --color-gray-200: rgba(245, 245, 245, 1);
+            --color-gray-300: rgba(167, 169, 169, 1);
+            --color-slate-500: rgba(98, 108, 113, 1);
+            --color-slate-900: rgba(19, 52, 59, 1);
+            --color-charcoal-700: rgba(31, 33, 33, 1);
+            --color-charcoal-800: rgba(38, 40, 40, 1);
+            --color-teal-300: rgba(50, 184, 198, 1);
+            --color-teal-500: rgba(33, 128, 141, 1);
+            --color-teal-600: rgba(29, 116, 128, 1);
+            --color-red-400: rgba(255, 84, 89, 1);
+            --color-red-500: rgba(192, 21, 47, 1);
+            --color-orange-400: rgba(230, 129, 97, 1);
+            --color-orange-500: rgba(168, 75, 47, 1);
+            --color-brown-600-rgb: 94, 82, 64;
+            --color-teal-500-rgb: 33, 128, 141;
+            --color-background: var(--color-cream-50);
+            --color-surface: var(--color-cream-100);
+            --color-text: var(--color-slate-900);
+            --color-text-secondary: var(--color-slate-500);
+            --color-primary: var(--color-teal-500);
+            --color-primary-hover: var(--color-teal-600);
+            --color-border: rgba(var(--color-brown-600-rgb), 0.2);
+            --color-card-border: rgba(var(--color-brown-600-rgb), 0.12);
+            --color-error: var(--color-red-500);
+            --color-warning: var(--color-orange-500);
+            --color-bg-1: rgba(59, 130, 246, 0.08);
+            --color-bg-2: rgba(245, 158, 11, 0.08);
+            --color-bg-3: rgba(34, 197, 94, 0.08);
+            --color-bg-4: rgba(239, 68, 68, 0.08);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --color-background: var(--color-charcoal-700);
+                --color-surface: var(--color-charcoal-800);
+                --color-text: var(--color-gray-200);
+                --color-text-secondary: rgba(167, 169, 169, 0.7);
+                --color-primary: var(--color-teal-300);
+                --color-border: rgba(119, 124, 124, 0.3);
+                --color-card-border: rgba(119, 124, 124, 0.2);
+                --color-error: var(--color-red-400);
+                --color-warning: var(--color-orange-400);
+                --color-bg-1: rgba(29, 78, 216, 0.15);
+                --color-bg-2: rgba(180, 83, 9, 0.15);
+                --color-bg-3: rgba(21, 128, 61, 0.15);
+                --color-bg-4: rgba(185, 28, 28, 0.15);
+            }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--color-background);
+            color: var(--color-text);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px 20px;
+            background: var(--color-surface);
+            border-radius: 12px;
+            border: 1px solid var(--color-card-border);
+        }
+
+        h1 {
+            font-size: 32px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--color-text);
+        }
+
+        .subtitle {
+            color: var(--color-text-secondary);
+            font-size: 16px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: var(--color-surface);
+            padding: 24px;
+            border-radius: 12px;
+            border: 1px solid var(--color-card-border);
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--color-primary);
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--color-text-secondary);
+            font-weight: 500;
+        }
+
+        .filters {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 10px 20px;
+            border: 1px solid var(--color-border);
+            background: var(--color-surface);
+            color: var(--color-text);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .filter-btn:hover {
+            background: var(--color-primary);
+            color: white;
+            border-color: var(--color-primary);
+        }
+
+        .filter-btn.active {
+            background: var(--color-primary);
+            color: white;
+            border-color: var(--color-primary);
+        }
+
+        .incidents-container {
+            display: grid;
+            gap: 24px;
+        }
+
+        .incident-card {
+            background: var(--color-surface);
+            border: 1px solid var(--color-card-border);
+            border-radius: 12px;
+            padding: 24px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .incident-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .incident-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 16px;
+            gap: 16px;
+        }
+
+        .incident-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--color-text);
+            flex: 1;
+        }
+
+        .severity-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .severity-critical {
+            background: rgba(192, 21, 47, 0.15);
+            color: var(--color-error);
+            border: 1px solid rgba(192, 21, 47, 0.25);
+        }
+
+        .severity-high {
+            background: rgba(168, 75, 47, 0.15);
+            color: var(--color-warning);
+            border: 1px solid rgba(168, 75, 47, 0.25);
+        }
+
+        .severity-medium {
+            background: rgba(245, 158, 11, 0.15);
+            color: #f59e0b;
+            border: 1px solid rgba(245, 158, 11, 0.25);
+        }
+
+        .incident-meta {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            color: var(--color-text-secondary);
+        }
+
+        .meta-icon {
+            font-size: 16px;
+        }
+
+        .incident-description {
+            color: var(--color-text);
+            margin-bottom: 16px;
+            line-height: 1.7;
+        }
+
+        .impact-section {
+            background: var(--color-bg-1);
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+
+        .impact-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--color-text);
+        }
+
+        .impact-list {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .impact-list li {
+            padding: 4px 0;
+            font-size: 14px;
+            color: var(--color-text);
+        }
+
+        .impact-list li::before {
+            content: "→ ";
+            color: var(--color-primary);
+            font-weight: bold;
+            margin-right: 8px;
+        }
+
+        .cost-highlight {
+            display: inline-block;
+            background: var(--color-bg-4);
+            color: var(--color-error);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .tags {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .tag {
+            padding: 4px 12px;
+            background: var(--color-bg-2);
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--color-text);
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 14px 20px;
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            background: var(--color-surface);
+            color: var(--color-text);
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+
+        .search-box:focus {
+            outline: 2px solid var(--color-primary);
+            border-color: var(--color-primary);
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--color-text-secondary);
+            font-size: 18px;
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .incident-header {
+                flex-direction: column;
+            }
+
+            .incident-meta {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔒 ChatGPT Data Breach Explorer</h1>
+            <p class="subtitle">Interactive research database of costly data leakages due to ChatGPT usage</p>
+        </header>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value">€15M</div>
+                <div class="stat-label">Largest Fine (Italy vs OpenAI)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">225K+</div>
+                <div class="stat-label">Compromised Credentials</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">77%</div>
+                <div class="stat-label">Employees Leak Data via AI</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">$4.88M</div>
+                <div class="stat-label">Avg Global Breach Cost</div>
+            </div>
+        </div>
+
+        <input type="text" id="searchBox" class="search-box" placeholder="🔍 Search incidents by company, type, or keyword...">
+
+        <div class="filters">
+            <button class="filter-btn active" data-filter="all">All Incidents</button>
+            <button class="filter-btn" data-filter="critical">Critical</button>
+            <button class="filter-btn" data-filter="high">High Severity</button>
+            <button class="filter-btn" data-filter="regulatory">Regulatory</button>
+            <button class="filter-btn" data-filter="enterprise">Enterprise</button>
+            <button class="filter-btn" data-filter="credential">Credentials</button>
+        </div>
+
+        <div class="incidents-container" id="incidentsContainer"></div>
+        <div class="no-results" id="noResults" style="display: none;">No incidents found matching your criteria.</div>
+    </div>
+
+    <script>
+        const incidents = [
+            {
+                title: "Italy's €15 Million GDPR Fine Against OpenAI",
+                date: "December 2024",
+                severity: "critical",
+                category: ["regulatory", "gdpr"],
+                company: "OpenAI",
+                cost: "€15 million ($15.6M)",
+                affected: "All Italian users",
+                description: "Italy's Data Protection Authority imposed the first major regulatory penalty against a generative AI provider for multiple GDPR violations, including processing personal data without legal basis, lack of transparency, failure to notify about March 2023 breach, and inadequate age verification.",
+                impacts: [
+                    "€15 million fine - largest AI-related GDPR penalty",
+                    "Mandatory 6-month public awareness campaign",
+                    "Set precedent for AI regulation across EU",
+                    "Required implementation of age verification systems"
+                ],
+                sources: [
+                    "https://legal.economictimes.indiatimes.com/news/industry/italy-fines-openai-15-million-euros-over-privacy-rules-breach/116443055",
+                    "https://www.natlawreview.com/article/italy-fines-openai-eu15m-gdpr-violations-ai-case",
+                    "https://www.euronews.com/next/2024/12/19/italys-privacy-watchdog-fines-openai-eu15-million-after-chatgpt-data-breach"
+                ]
+            },
+            {
+                title: "Samsung Semiconductor Source Code Leaks",
+                date: "April 2023",
+                severity: "critical",
+                category: ["enterprise", "source-code"],
+                company: "Samsung Electronics",
+                cost: "Undisclosed (potentially catastrophic)",
+                affected: "Semiconductor division",
+                description: "Three separate incidents within 20 days where Samsung engineers leaked proprietary source code, meeting transcripts, and chip testing sequences through ChatGPT. Engineers used the tool to debug code, generate meeting notes, and optimize test sequences.",
+                impacts: [
+                    "Proprietary semiconductor code exposed to external servers",
+                    "Complete ban on all generative AI tools company-wide",
+                    "Competitive disadvantage in semiconductor industry",
+                    "Risk of code becoming accessible to competitors"
+                ],
+                sources: [
+                    "https://www.forbes.com/sites/siladityaray/2023/05/02/samsung-bans-chatgpt-among-employees-after-sensitive-code-leak/",
+                    "https://www.techcrunch.com/2023/05/02/samsung-bans-use-of-generative-ai-tools-like-chatgpt-after-april-internal-data-leak/",
+                    "https://www.cshub.com/ai/articles/samsung-employees-allegedly-leak-data-via-chatgpt"
+                ]
+            },
+            {
+                title: "Mass Credential Theft - 225,000+ Accounts",
+                date: "January-October 2023",
+                severity: "critical",
+                category: ["credential", "dark-web"],
+                company: "ChatGPT Users Worldwide",
+                cost: "$4.88M avg per breach",
+                affected: "225,000+ users",
+                description: "Group-IB discovered over 225,000 sets of compromised ChatGPT credentials being sold on dark web marketplaces, stolen through information-stealing malware including LummaC2 (70,484 devices), Raccoon (22,468), and RedLine (15,970). India had highest concentration with 12,632 compromised accounts.",
+                impacts: [
+                    "225,000+ ChatGPT credentials on dark web",
+                    "36% increase in compromised hosts H2 2023",
+                    "Asia-Pacific region most affected",
+                    "Potential access to conversation history and personal data"
+                ],
+                sources: [
+                    "https://www.scworld.com/brief/chatgpt-credentials-snagged-by-infostealers-on-225k-compromised-devices",
+                    "https://thehackernews.com/2024/03/over-225000-compromised-chatgpt.html",
+                    "https://intelligentciso.com/2023/06/29/group-ib-discovers-100k-compromised-chatgpt-credentials-for-sale/"
+                ]
+            },
+            {
+                title: "March 2023 Redis Bug Data Breach",
+                date: "March 20, 2023",
+                severity: "high",
+                category: ["platform", "technical"],
+                company: "OpenAI",
+                cost: "Undisclosed",
+                affected: "1.2% of ChatGPT Plus subscribers",
+                description: "ChatGPT's first major data breach caused by Redis library bug exposed sensitive information during a 9-hour window (1 AM - 10 AM Pacific). Data included names, emails, payment addresses, partial credit card information, and chat history titles.",
+                impacts: [
+                    "Payment information exposed (card type, last 4 digits, expiration)",
+                    "Email addresses and names compromised",
+                    "Chat history titles and first messages visible",
+                    "9-hour exposure window before patching"
+                ],
+                sources: [
+                    "https://www.pluralsight.com/resources/blog/security-professional/all-about-chatgpts-first-data-breach-and-how-it-happened",
+                    "https://www.mashable.com/article/chatgpt-bug-exposed-private-data",
+                    "https://openai.com/index/march-20-chatgpt-outage/"
+                ]
+            },
+            {
+                title: "NSW Australia Government Flood Victims Breach",
+                date: "March 2025",
+                severity: "high",
+                category: ["government", "pii"],
+                company: "NSW Reconstruction Authority",
+                cost: "Undisclosed investigation costs",
+                affected: "~3,000 flood victims",
+                description: "Former contractor uploaded Excel spreadsheet with 12,000+ rows of Northern Rivers Resilient Homes Program data to ChatGPT, exposing names, addresses, emails, phone numbers, and personal/health information of flood victims.",
+                impacts: [
+                    "Personal and health information of 3,000 victims exposed",
+                    "Complex forensic analysis required",
+                    "Individual notification process initiated",
+                    "Government trust and reputation damage"
+                ],
+                sources: [
+                    "https://www.abc.net.au/news/2025-10-05/nsw-flood-victims-personal-details-loaded-to-chatgpt/104444666",
+                    "https://cyberdaily.au/government/12032-former-nsw-government-contractor-posted-flood-victim-data-on-chatgpt",
+                    "https://www.itnews.com.au/news/nsw-gov-contractor-uploaded-excel-spreadsheet-of-flood-victim-data-to-chatgpt-614871"
+                ]
+            },
+            {
+                title: "Shadow AI Enterprise Data Exposure",
+                date: "2023-2025",
+                severity: "critical",
+                category: ["enterprise", "shadow-ai"],
+                company: "Multiple Organizations",
+                cost: "$4.63M avg (shadow AI premium: $670K)",
+                affected: "77% of employees",
+                description: "Comprehensive analysis reveals 77% of employee AI interactions involve actual company data, with 82% occurring through personal accounts. Shadow AI breaches cost $670,000 more than standard breaches. 11% of data pasted into ChatGPT is confidential.",
+                impacts: [
+                    "77% of employees leak company data through AI",
+                    "82% use personal, unmonitored accounts",
+                    "$670,000 shadow AI premium per breach",
+                    "60.4% increase in leak incidents Feb-Apr 2023"
+                ],
+                sources: [
+                    "https://www.moneycontrol.com/technology/employees-are-accidentally-leaking-company-data-through-genai-tools-report-article-12836831.html",
+                    "https://www.tomsguide.com/computing/artificial-intelligence/employees-are-unknowingly-leaking-company-secrets-via-ai-chatbots-77-of-prompts-contain-sensitive-info",
+                    "https://kiteworks.com/risk-compliance-glossary/shadow-ai/"
+                ]
+            },
+            {
+                title: "Apple Internal Data Leak Concerns",
+                date: "May 2023",
+                severity: "high",
+                category: ["enterprise", "tech-company"],
+                company: "Apple Inc.",
+                cost: "Preventive measures",
+                affected: "All employees",
+                description: "Apple restricted employee use of ChatGPT and GitHub Copilot after concerns that confidential data could leak to external servers. The ban aimed to prevent proprietary code, product plans, and internal communications from being exposed.",
+                impacts: [
+                    "Company-wide ChatGPT and GitHub Copilot ban",
+                    "Development of internal AI alternatives",
+                    "Productivity trade-offs for security",
+                    "Industry-wide influence on AI policies"
+                ],
+                sources: [
+                    "https://www.mashable.com/article/apple-chatgpt-employees-ban",
+                    "https://www.theverge.com/2023/5/18/23729070/apple-restricts-chatgpt-employees-fear-leaks",
+                    "https://www.fortune.com/2023/05/18/chatgpt-bans-apple-samsung-amazon-openai-data-leaks/"
+                ]
+            },
+            {
+                title: "Amazon Employee Data Warning",
+                date: "January 2023",
+                severity: "high",
+                category: ["enterprise", "tech-company"],
+                company: "Amazon",
+                cost: "Incident response costs",
+                affected: "Corporate employees",
+                description: "Amazon discovered ChatGPT responses that closely resembled internal Amazon data, prompting urgent warnings to employees. The company implemented pop-up warnings when employees accessed ChatGPT and developed internal guidelines.",
+                impacts: [
+                    "ChatGPT output matched internal Amazon data",
+                    "Pop-up warnings implemented for ChatGPT access",
+                    "Risk of exposing AWS strategies and code",
+                    "Accelerated internal AI tool development"
+                ],
+                sources: [
+                    "https://www.futurism.com/the-byte/amazon-begs-employees-stop-leaking-secrets-chatgpt",
+                    "https://www.peoplematters.in/article/culture/after-amazon-jpmorgan-chase-and-other-companies-curb-employee-use-of-chatgpt-37266"
+                ]
+            },
+            {
+                title: "Wall Street Banks Mass Restrictions",
+                date: "February-June 2023",
+                severity: "high",
+                category: ["enterprise", "financial"],
+                company: "JPMorgan, Goldman Sachs, Citigroup, Deutsche Bank",
+                cost: "Compliance and policy costs",
+                affected: "Thousands of bank employees",
+                description: "Major financial institutions including JPMorgan Chase, Goldman Sachs, Bank of America, Citigroup, Deutsche Bank, and Wells Fargo implemented strict restrictions or complete bans on ChatGPT due to data leakage risks involving client information, trading strategies, and proprietary financial models.",
+                impacts: [
+                    "JPMorgan: Restricted access February 2023",
+                    "Goldman Sachs: Automatic blocking implemented",
+                    "Deutsche Bank: Complete access disabled",
+                    "Risk of exposing client portfolios and trading algorithms"
+                ],
+                sources: [
+                    "https://www.forbes.com/sites/marisadellatto/2023/02/22/jpmorgan-restricts-employee-use-of-chatgpt/",
+                    "https://www.businesstoday.in/technology/news/story/after-amazon-jpmorgan-chase-and-other-companies-curb-employee-use-of-chatgpt-370192-2023-02-22",
+                    "https://tech.co/news/wall-street-banks-banning-chatgpt"
+                ]
+            },
+            {
+                title: "ChatGPT Memory Persistent Injection",
+                date: "November 2024",
+                severity: "high",
+                category: ["vulnerability", "technical"],
+                company: "OpenAI",
+                cost: "Security research costs",
+                affected: "All ChatGPT users with memory enabled",
+                description: "Security researchers discovered persistent indirect prompt injection attacks exploiting ChatGPT's memory feature, enabling long-term data exfiltration across multiple conversations without user awareness.",
+                impacts: [
+                    "Cross-conversation data exfiltration possible",
+                    "Persistent attacks survive session resets",
+                    "Memory feature weaponized for surveillance",
+                    "Difficult for users to detect compromise"
+                ],
+                sources: [
+                    "https://goml.io/blog/indirect-prompt-injection",
+                    "https://www.lakera.ai/blog/prompt-injection-attacks"
+                ]
+            },
+            {
+                title: "Microsoft Copilot EchoLeak Vulnerability",
+                date: "2025",
+                severity: "critical",
+                category: ["vulnerability", "zero-click"],
+                company: "Microsoft",
+                cost: "Enterprise exposure risk",
+                affected: "Microsoft 365 Copilot users",
+                description: "CVE-2025-32711 'EchoLeak' zero-click vulnerability in Microsoft 365 Copilot allowed automatic exfiltration of sensitive information without any user interaction by exploiting LLM scope violations.",
+                impacts: [
+                    "Zero-click exploitation (no user action required)",
+                    "Automatic data exfiltration capability",
+                    "LLM scope violation exploitation",
+                    "Enterprise-wide exposure potential"
+                ],
+                sources: [
+                    "https://www.cybersecuritydive.com/news/critical-flaw-microsoft-copilot-zenity/718018/",
+                    "https://www.infosecurity-magazine.com/news/m365-copilot-zeroclick-ai-flaw/"
+                ]
+            },
+            {
+                title: "Wayback Copilot GitHub Repository Exposure",
+                date: "2025",
+                severity: "critical",
+                category: ["vulnerability", "credential"],
+                company: "Microsoft, Google, Intel, PayPal, IBM, Tencent",
+                cost: "Undisclosed",
+                affected: "20,580 repositories, 16,290 organizations",
+                description: "Lasso Security discovered Microsoft Copilot exposed over 20,580 GitHub repositories from 16,290 organizations through Bing's caching mechanism. Private repositories remained accessible even after deletion, exposing 300+ private tokens, keys, secrets, and 100+ internal packages.",
+                impacts: [
+                    "20,580 repositories exposed (Google, Microsoft, Intel, PayPal)",
+                    "300+ private tokens and API keys leaked",
+                    "100+ internal packages vulnerable to dependency confusion",
+                    "Deleted/private repos still accessible via cache"
+                ],
+                sources: [
+                    "https://www.calcalistech.com/ctechnews/article/ry6g6zexjx",
+                    "https://lasso.security/blog/copilot-vulnerability-exposes-fortune-500-data"
+                ]
+            },
+            {
+                title: "Cyberhaven Enterprise Leak Study",
+                date: "2023",
+                severity: "high",
+                category: ["enterprise", "research"],
+                company: "Companies with 100K+ employees",
+                cost: "$4.88M avg per breach",
+                affected: "11% of data inputs",
+                description: "Cyberhaven research found that in companies with 100,000 employees, 199 incidents per week involved confidential data being entered into ChatGPT. 11% of all data employees paste into ChatGPT contains sensitive information, with 4.7% of employees having pasted sensitive data at least once.",
+                impacts: [
+                    "199 leak incidents per week per 100K employees",
+                    "Source code: 278 incidents per 100K/week",
+                    "Client data: 260 incidents per 100K/week",
+                    "60.4% incident increase Feb-Apr 2023"
+                ],
+                sources: [
+                    "https://www.cyberhaven.com/blog/11-of-data-employees-paste-into-chatgpt-is-confidential/",
+                    "https://www.darkreading.com/cyberattacks-data-breaches/employees-feeding-sensitive-biz-data-chatgpt-raising-security-fears"
+                ]
+            },
+            {
+                title: "ChatGPT Google Search Indexing Leak",
+                date: "November 2024",
+                severity: "medium",
+                category: ["platform", "privacy"],
+                company: "OpenAI",
+                cost: "Reputation damage",
+                affected: "Unknown number of users",
+                description: "ChatGPT's web browsing mode inadvertently exposed private conversations through Google Search results when conversations were routed through 'hints=search' tag, causing parts of user prompts to be added to URLs that Google automatically indexed.",
+                impacts: [
+                    "Private conversations indexed by Google",
+                    "User prompts exposed in search results",
+                    "URLs with conversation fragments publicly accessible",
+                    "Privacy expectations violated"
+                ],
+                sources: [
+                    "https://www.hindustantimes.com/technology/chatgpt-private-chats-leaked-on-google-search-heres-what-you-should-know-101731392867693.html",
+                    "https://www.newindianexpress.com/xplore/2025/Apr/08/chatgpt-raises-alarm-after-leaking-personal-data-instead-of-memories"
+                ]
+            },
+            {
+                title: "AgentFlayer Indirect Prompt Injection",
+                date: "2024",
+                severity: "high",
+                category: ["vulnerability", "zero-click"],
+                company: "ChatGPT with Connectors",
+                cost: "Security research disclosure",
+                affected: "Users with connected platforms",
+                description: "Security researchers demonstrated ChatGPT's Connectors feature could be exploited through indirect prompt injection to extract sensitive data from connected platforms like Google Drive. Zero-click attack required only victim's email address.",
+                impacts: [
+                    "Zero-click data extraction (email address only)",
+                    "Developer secrets and API keys exposed",
+                    "Google Drive data accessible to attackers",
+                    "No user interaction required for compromise"
+                ],
+                sources: [
+                    "https://www.wired.com/story/chatgpt-prompt-injection-attack-security/",
+                    "https://arxiv.org/abs/2312.12351"
+                ]
+            }
+        ];
+
+        let currentFilter = 'all';
+        let searchTerm = '';
+
+        function renderIncidents() {
+            const container = document.getElementById('incidentsContainer');
+            const noResults = document.getElementById('noResults');
+            
+            const filtered = incidents.filter(incident => {
+                const matchesFilter = currentFilter === 'all' || 
+                    incident.severity === currentFilter || 
+                    incident.category.includes(currentFilter);
+                
+                const matchesSearch = searchTerm === '' || 
+                    incident.title.toLowerCase().includes(searchTerm) ||
+                    incident.company.toLowerCase().includes(searchTerm) ||
+                    incident.description.toLowerCase().includes(searchTerm) ||
+                    incident.category.some(cat => cat.toLowerCase().includes(searchTerm));
+                
+                return matchesFilter && matchesSearch;
+            });
+
+            if (filtered.length === 0) {
+                container.style.display = 'none';
+                noResults.style.display = 'block';
+                return;
+            }
+
+            container.style.display = 'grid';
+            noResults.style.display = 'none';
+
+            container.innerHTML = filtered.map(incident => `
+                <div class="incident-card">
+                    <div class="incident-header">
+                        <h3 class="incident-title">${incident.title}</h3>
+                        <span class="severity-badge severity-${incident.severity}">
+                            ${incident.severity.toUpperCase()}
+                        </span>
+                    </div>
+                    
+                    <div class="incident-meta">
+                        <div class="meta-item">
+                            <span class="meta-icon">📅</span>
+                            <span>${incident.date}</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-icon">🏢</span>
+                            <span>${incident.company}</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-icon">💰</span>
+                            <span class="cost-highlight">${incident.cost}</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-icon">👥</span>
+                            <span>${incident.affected}</span>
+                        </div>
+                    </div>
+                    
+                    <p class="incident-description">${incident.description}</p>
+                    
+                    <div class="impact-section">
+                        <div class="impact-title">Key Impacts & Consequences</div>
+                        <ul class="impact-list">
+                            ${incident.impacts.map(impact => `<li>${impact}</li>`).join('')}
+                        </ul>
+                    </div>
+                    
+                    <div class="tags">
+                        ${incident.category.map(cat => `<span class="tag">${cat}</span>`).join('')}
+                    </div>
+                    
+                    ${incident.sources ? `
+                        <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--color-border);">
+                            <div style="font-size: 12px; font-weight: 600; color: var(--color-text-secondary); margin-bottom: 8px;">📚 Reference Links:</div>
+                            <div style="display: flex; flex-direction: column; gap: 6px;">
+                                ${incident.sources.map((source, idx) => `
+                                    <a href="${source}" target="_blank" rel="noopener noreferrer" 
+                                       style="font-size: 12px; color: var(--color-primary); text-decoration: none; display: flex; align-items: center; gap: 6px;">
+                                        <span style="font-weight: 600;">[${idx + 1}]</span>
+                                        <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${source}</span>
+                                        <span style="font-size: 10px;">↗</span>
+                                    </a>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+
+        // Filter buttons
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentFilter = this.dataset.filter;
+                renderIncidents();
+            });
+        });
+
+        // Search functionality
+        const searchBox = document.getElementById('searchBox');
+        searchBox.addEventListener('input', function() {
+            searchTerm = this.value.toLowerCase();
+            renderIncidents();
+        });
+
+        // Initial render
+        renderIncidents();
+    </script>
+</body>
+</html>
+
